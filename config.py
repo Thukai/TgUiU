@@ -5,12 +5,12 @@ class Config(object):
   
   API_HASH = os.getenv("apihash")
   
-  BOT_TOKEN = os.getenv("tk")
+  BOT_TOKEN = os.getenv("token")
   
   AUTH = os.getenv("auth")
   
   OWNER =os.getenv("owner")
 
-  TeraExScript = os.getenv("tscript")
+  #TeraExScript = os.getenv("tscript")
 
-  PW =int(os.getenv("spw"))
+  #PW =int(os.getenv("spw"))
