@@ -1,6 +1,6 @@
 import aiohttp
 import asyncio
-import os
+import os, re
 import time
 import subprocess
 import humanize
@@ -63,6 +63,7 @@ async def get_file_info(url):
                 file_type = get_file_type(content_type)
                 if is_m3u8:
                     file_type = "video"
+                    filename = filename.replace(".m3u8",".mp4")
                 return {
                     "url": url,
                     "filename": filename,
@@ -75,12 +76,12 @@ async def get_file_info(url):
 
 
 # Function to download a file with progress tracking
-async def download_file(url, filename=None, msg, chunk_size=1024 * 1024):
+async def download_file(url, msg, filename=None, chunk_size=1024 * 1024):
     file_info = await get_file_info(url)
     if "error" in file_info:
         print(f"Error: {file_info['error']}")
         await msg.edit_text(f"Err getting file data: {file_info['error']}")
-        return
+        return {"error":file_info['error']}
 
     filename = filename or file_info["filename"]
     file_size = file_info["file_size"]
@@ -112,7 +113,7 @@ async def download_file(url, filename=None, msg, chunk_size=1024 * 1024):
                             elapsed_time = time.time() - start_time
                             speed = downloaded / elapsed_time if elapsed_time > 0 else 0
                              
-                            await print_progress(filename=filename, downloaded=downloaded, total_size=None, speed=speed, eta=None, msg=msg, st=start_time)
+                            await print_progress(filename=filename, downloaded=downloaded, total_size=None, speed=speed, eta=None, st=start_time, msg=msg)
                         print(f"\nDownload complete: {file_path}")
                         await msg.edit_text(f"Download complete: {file_path}")
                         return
@@ -132,68 +133,101 @@ async def download_file(url, filename=None, msg, chunk_size=1024 * 1024):
 
                             # Print progress
                             progress.update(len(chunk))
-                            await print_progress(filename, downloaded, file_size, speed, eta, msg=msg, st=start_time)
+                            await print_progress(filename, downloaded, file_size, speed, eta, st=start_time, msg=msg)
 
         except Exception as e:
             print(f"Download failed: {str(e)}")
             await msg.edit_text(f"Download failed: {str(e)}")
-            return
+            return {"error": f"ERR on download : {str(e)}"}
 
     print(f"\nDownload complete: {file_path}")
     await msg.edit_text(f"Download complete: {file_path}")
+    return {"ok":f"{file_path}"}
 
-# Function to download M3U8 streams using FFmpeg and show progress
-async def download_m3u8(url, filename, msg):
-    filename = os.path.join(dldir, filename)  # Save in the specified directory
-    print(f"Downloading M3U8 stream: {url} -> {filename}")
-    await msg.edit_text(f"Downloading M3U8 stream: {url} -> {filename}")
-    
+
+async def download_m3u8(url, msg, filename):
+    file_path = os.path.join(dldir, filename)
+    print(f"Downloading M3U8 stream: {url} -> {file_path}")
+    await msg.edit_text(f"Downloading M3U8 stream: {url} -> {file_path}")
+
     command = [
-        "ffmpeg", "-i", url, "-c", "copy", "-bsf:a", "aac_adtstoasc", filename
+        "ffmpeg", "-i", url, "-c", "copy", "-bsf:a", "aac_adtstoasc", file_path, "-progress", "pipe:1"
     ]
 
     try:
-        # Start process and capture real-time logs
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
 
         start_time = time.time()
-        downloaded = 0
+        duration = None
+        last_update = time.time()
 
-        for line in process.stdout:
-            # Extract progress from FFmpeg logs
-            if "time=" in line:
-                elapsed_time = time.time() - start_time
-                downloaded += 1024 * 1024  # Simulating 1MB per log update
+        while True:
+            output = process.stderr.readline()
+            if not output:
+                break
+            
+            # Extract video duration
+            if duration is None:
+                match = re.search(r"Duration:\s(\d+):(\d+):(\d+.\d+)", output)
+                if match:
+                    h, m, s = map(float, match.groups())
+                    duration = h * 3600 + m * 60 + s  # Convert to seconds
 
-                speed = downloaded / elapsed_time if elapsed_time > 0 else 0
-                await print_progress(filename, downloaded, None, speed, elapsed_time, msg=msg, st=start_time)
-        
+            # Extract current progress time
+            time_match = re.search(r"time=(\d+):(\d+):(\d+.\d+)", output)
+            if time_match:
+                h, m, s = map(float, time_match.groups())
+                current_time = h * 3600 + m * 60 + s  # Convert to seconds
+
+                if duration:
+                    percent = (current_time / duration) * 100
+                    elapsed = time.time() - start_time
+                    eta = (elapsed / percent) * (100 - percent) if percent > 0 else 0
+
+                    # Update every 10 seconds
+                    if time.time() - last_update >= 10:
+                        last_update = time.time()
+                        await msg.edit_text(
+                            f"📥 Downloading...\n"
+                            f"📝 File: `{filename}`\n"
+                            f"⏳ Progress: `{percent:.2f}%`\n"
+                            f"⏱ Elapsed: `{int(elapsed)}s`\n"
+                            f"⌛ ETA: `{int(eta)}s`"
+                        )
+
         process.wait()
-        
+
         if process.returncode != 0:
-            print(f"Error: FFmpeg failed to download M3U8 stream.")
-            await msg.edit_text(f"Error: FFmpeg failed to download M3U8 stream.")
-        else:
-            print(f"\nM3U8 Download complete: {filename}")
-            await msg.edit_text(f"\nM3U8 Download complete: {filename}")
+            await msg.edit_text(f"❌ FFmpeg failed to download M3U8 stream.")
+            return {"error": "ERR on ffmpeg download m3u8."}
+
+        await msg.edit_text(f"✅ M3U8 Download complete: `{filename}`")
+        return {"ok": file_path}
 
     except Exception as e:
-        print(f"Error downloading M3U8: {str(e)}")
-        await msg.edit_text(f"Error downloading M3U8: {str(e)}")
+        await msg.edit_text(f"❌ Error downloading M3U8: {str(e)}")
+        return {"error": f"ERR on download m3u8: {str(e)}"}
 
 #handled m3u8 dl
-async def download_m3u8_2(url, filename, msg):
+async def download_m3u8_2(url, msg, filename):
     filename = os.path.join(dldir, filename)  # Save in the specified directory
     print(f"Downloading M3U8 stream: {url} -> {filename}")
     await msg.edit_text(f"Downloading M3U8 stream: {url} -> {filename}")
+    file_path = os.path.join(dldir, filename)
+
     
     command = [
-        "ffmpeg", "-i", url, "-c", "copy", "-bsf:a", "aac_adtstoasc", filename
+        "ffmpeg", "-i", url, "-c", "copy", "-bsf:a", "aac_adtstoasc", file_path
     ]
 
     try:
         # Use asyncio for non-blocking process management
-        process = await asyncio.create_subprocess_exec(*command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        process = await asyncio.create_subprocess_exec(*command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
         start_time = time.time()
         downloaded = 0
@@ -205,7 +239,7 @@ async def download_m3u8_2(url, filename, msg):
                 downloaded += 1024 * 1024  # Simulating 1MB per log update
 
                 speed = downloaded / elapsed_time if elapsed_time > 0 else 0
-                await print_progress(filename, downloaded, None, speed, elapsed_time, msg=msg, st=start_time)
+                await print_progress(filename, downloaded, None, speed, elapsed_time, st=start_time, msg=msg)
         
         # Wait for the process to finish
         await process.wait()
@@ -213,19 +247,24 @@ async def download_m3u8_2(url, filename, msg):
         if process.returncode != 0:
             print(f"Error: FFmpeg failed to download M3U8 stream.")
             await msg.edit_text(f"Error: FFmpeg failed to download M3U8 stream.")
+            return {"error": f"ERR on ffmpeg download m3u8."}
+
         else:
             print(f"\nM3U8 Download complete: {filename}")
             await msg.edit_text(f"\nM3U8 Download complete: {filename}")
-
+            return {"ok":f"{file_path}"}
+    
     except Exception as e:
         print(f"Error downloading M3U8: {str(e)}")
         await msg.edit_text(f"Error downloading M3U8: {str(e)}")
+        return {"error": f"ERR on download m3u8: {str(e)}"}
 
 
 last_msg=""
 last_t=0
 # Function to print progress updates
-async def print_progress(filename, downloaded, total_size, speed, eta, msg=None, st):
+async def print_progress(filename, downloaded, total_size, speed, eta, st, msg=None):
+    global last_msg, last_t
     eta_str = f"{int(eta)}s" if eta else "Unknown"
     percent_done = f"{(downloaded / total_size) * 100:.2f}%" if total_size else "Unknown"
     speed_str = format_size(speed) + "/s" if speed else "Unknown"
@@ -233,7 +272,6 @@ async def print_progress(filename, downloaded, total_size, speed, eta, msg=None,
     total_size_str = format_size(total_size) if total_size else "Unknown"
 
     print(f"\r{filename}: {size_done}/{total_size_str} ({percent_done}) at {speed_str}, ETA: {eta_str}", end="", flush=True)
-    etime = time.time() - start_time
     if msg:
         if last_t == 0 or time.time() - last_t >= 10:
             new_msg = f"**Downloading...**\n\nName : {filename}\nDone : {size_done}/{total_size_str}\nP : {percent_done}\nSpeed : {speed_str}\nETA: {eta_str}"
@@ -257,12 +295,14 @@ async def dl(url, msg, custom_filename=None):
     try:
         if file_info["is_m3u8"]:
             # Call download_m3u8 function
-            await download_m3u8(url, filename, msg=msg)
+            dlf=await download_m3u8(url, msg=msg, filename=filename)
         else:
             # Call download_file function
-            await download_file(url, filename, msg=msg)
-
-        return {"filename": filename, "file_path": file_path}
+            dlf=await download_file(url, msg=msg, filename=filename)
+        if not "error" in dlf:
+            return {"filename": filename, "file_path": file_path}
+        else:
+            return {"error": dlf['error']}
     
     except Exception as e:
         print(f"Error during download: {str(e)}")
