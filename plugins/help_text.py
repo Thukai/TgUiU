@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from config import Config
 from globals import AuthU, settings
-from Func.simples import mention_user
+from Func.utils import mention_user
 
 @Client.on_message(filters.command("start"))
 async def st_rep(client,message:Message):
