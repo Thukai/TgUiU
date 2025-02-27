@@ -54,7 +54,7 @@ async def handle_link(client, message):
     msg = await message.reply(stT)
 
     # Check if the URL is a direct download link
-    if is_direct_download(link):
+    if await is_direct_download(link):
         # Proceed to download the file
         dl_file = await dl(url=link, msg=msg, custom_filename=newName)
         if dl_file and not "error" in dl_file:
