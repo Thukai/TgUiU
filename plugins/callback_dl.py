@@ -28,8 +28,6 @@ async def handle_callback(client, callback_query):
     json_data = get_json(jsonf)
     link = json_data[mk][k]
     newName = f"{json_data['name']}.{mk}"
-    stT = f"🛠**Processing...**"
-    msg = await message.reply(stT)
     dl_file = await dl(url=link, msg=msg, custom_filename=newName)
     if dl_file and not "error" in dl_file:
         res = await upload_file(client, message.chat.id, dl_file["file_path"], msg, as_document=False, thumb=None) #try upload
