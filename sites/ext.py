@@ -25,5 +25,5 @@ def run_extractor(url):
         return data
     else:
         print(f"No extractor found for domain: {domain}")
-        return None
+        return {"error":"Sorry!,\nI'm not supporting for extract data from that site😓"}
 
