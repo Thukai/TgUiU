@@ -4,7 +4,7 @@ import os
 import random
 import string
 
-def json_to_tmp(json_obj, filename=None):
+def save_json(json_obj, filename=None):
     """Saves a given JSON object to a file with a random name if no filename is provided."""
     if filename is None:
         # Generate a random filename if not provided
