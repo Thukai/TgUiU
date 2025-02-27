@@ -2,6 +2,7 @@ import json
 import os
 import random
 import string
+import tempfile
 
 # Define the special directory path for JSON files
 SPECIAL_DIR = os.path.join(tempfile.gettempdir(), "json_files")
@@ -41,6 +42,18 @@ def read_json_from_file(filename):
     
     return json_data
 
+def delete_json(filename):
+    """Deletes a JSON file from the special directory using the given filename."""
+    
+    file_path = os.path.join(SPECIAL_DIR, filename)  # Get the full file path
+    
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"The file {file_path} does not exist.")
+    
+    # Delete the file
+    os.remove(file_path)
+    print(f"File {filename} has been deleted.")
+
 # Example usage
 def get_json(filename):
     try:
@@ -64,3 +77,6 @@ json_data = {
 
 # Read the saved JSON data
 #get_json(os.path.basename(json_file_path))
+
+# Now delete the JSON file
+#delete_json_file(os.path.basename(json_file_path))
