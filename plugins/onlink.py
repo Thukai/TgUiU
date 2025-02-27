@@ -85,16 +85,15 @@ async def handle_link(client, message):
               bar.append(button)
           keyboard=InlineKeyboardMarkup(bar)
           if data["thumbnail"]:
-            await msg.edit_media(
-              InputMediaPhoto(
-                media=data["thumbnail"],
-                caption=rtext,
-                reply_markup=keyboard
+            await msg.reply_photo(
+              photo=data["thumbnail"],
+              caption=rtext,
+              reply_markup=keyboard
               )
-            )
+            await msg.delete()
           else:
-            await message.edit_text(
-              rtext,
+            await msg.edit_text(
+              text=rtext,
               reply_markup=keyboard
             )
       
