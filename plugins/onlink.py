@@ -81,7 +81,7 @@ async def handle_link(client, message):
               bar.append(button)
           if m3u8s:
             for k in m3u8s:
-              button = [InlineKeyboardButton(f"{k}",callback_data=f"ext_{jsonf}_mp4_{k}")]
+              button = [InlineKeyboardButton(f"{k}",callback_data=f"ext_{jsonf}_m3u8_{k}")]
               bar.append(button)
           keyboard=InlineKeyboardMarkup(bar)
           if data.thumbnail:
