@@ -84,10 +84,10 @@ async def handle_link(client, message):
               button = [InlineKeyboardButton(f"{k}",callback_data=f"ext_{jsonf}_m3u8_{k}")]
               bar.append(button)
           keyboard=InlineKeyboardMarkup(bar)
-          if data.thumbnail:
+          if data["thumbnail"]:
             await msg.edit_media(
               InputMediaPhoto(
-                media=data.thumbnail,
+                media=data["thumbnail"],
                 caption=rtext,
                 reply_markup=keyboard
               )
@@ -99,7 +99,7 @@ async def handle_link(client, message):
             )
       
         else:
-          await msg.edit_text(f"**Error: {data["error"]}")
+          await msg.edit_text(f"**Error: {data['error']}")
         
 
 async def is_direct_download(url):
