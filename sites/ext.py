@@ -21,7 +21,7 @@ def run_extractor(url):
         # Dynamically import the module based on the domain
         extractor = importlib.import_module(script_name)
         # Assuming each script has an `extract_data(url)` function to extract data
-        data = extractor.extract_data(url)
+        data = extractor.extract(url)
         return data
     else:
         print(f"No extractor found for domain: {domain}")
