@@ -1,49 +1,57 @@
 import json
-import tempfile
 import os
 import random
 import string
 
+# Define the special directory path for JSON files
+SPECIAL_DIR = os.path.join(tempfile.gettempdir(), "json_files")
+
+# Ensure the directory exists
+os.makedirs(SPECIAL_DIR, exist_ok=True)
+
 def save_json(json_obj, filename=None):
-    """Saves a given JSON object to a file with a random name if no filename is provided."""
+    """Saves a given JSON object to a file within the special directory. 
+    If no filename is provided, a random name will be used."""
+    
+    # If no filename is provided, generate a random filename
     if filename is None:
-        # Generate a random filename if not provided
         filename = ''.join(random.choices(string.ascii_letters + string.digits, k=8)) + '.json'
     
-    # Create a temporary file with the provided or random filename
-    temp_file_path = os.path.join(tempfile.gettempdir(), filename)
+    # Full path to the special directory
+    temp_file_path = os.path.join(SPECIAL_DIR, filename)
     
     # Write the JSON object to the file
     with open(temp_file_path, 'w') as temp_file:
         json.dump(json_obj, temp_file, indent=4)
     
     print(f"JSON data saved to: {temp_file_path}")
-    return temp_file_path
+    return filename
 
 def read_json_from_file(filename):
-    """Reads a JSON file and returns the parsed JSON object."""
-    if not os.path.exists(filename):
-        raise FileNotFoundError(f"The file {filename} does not exist.")
+    """Reads a JSON file from the special directory and returns the parsed JSON object."""
+    
+    file_path = os.path.join(SPECIAL_DIR, filename)  # Get the full file path
+    
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"The file {file_path} does not exist.")
     
     # Read the file and parse the JSON content
-    with open(filename, 'r') as json_file:
+    with open(file_path, 'r') as json_file:
         json_data = json.load(json_file)
     
     return json_data
 
 # Example usage
-def get_json:
-    json_data = read_json_from_file(json_file_path)  # Use the path returned from save_json_to_tempfile
-    print(json_data)
-    return json_data
-except FileNotFoundError as e:
-    print(e)
-    return {"error":"Json not found!"}
+def get_json(filename):
+    try:
+        json_data = read_json_from_file(filename)  # Use the path returned from save_json
+        print(json_data)
+        return json_data
+    except FileNotFoundError as e:
+        print(e)
+        return {"error": "Json not found!"}
 
-
-
-# Example usage
-"""
+# Example usage of saving and reading JSON data
 json_data = {
     "name": "Sana Anzyu",
     "description": "A sample description for the video",
@@ -51,8 +59,8 @@ json_data = {
     "thumbnail": "https://example.com/thumbnail.jpg",
 }
 
-# Call the function without providing a filename
-json_file_path = save_json_to_tempfile(json_data)
-"""
+# Save the JSON data
+json_file_path = save_json(json_data)
 
-
+# Read the saved JSON data
+get_json(os.path.basename(json_file_path))
