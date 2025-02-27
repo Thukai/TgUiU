@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from sites.ext import run_extractor
-from Func.json_filehandle import save_json, get_json
+from Func.json_filehandle import save_json, get_json, delete_json
 from plugins.tgup import upload_file
 from Func.downloader import dl
 import os
@@ -39,6 +39,7 @@ async def handle_callback(client, callback_query):
           lg.info(f"Err on Uploading...")
     else:
         lg.info(f"Err on dl...{dl_file['error']}")
+    delete_json(jsonf)
     # Do something with these values
     #print(f"ext: {ext}, jsonf: {jsonf}, mp4: {mp4}, k: {k}")
     
