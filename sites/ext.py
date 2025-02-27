@@ -4,7 +4,7 @@ import urllib.parse
 
 # Dictionary to map domains to extractor scripts
 EXTRACTORS = {
-    'spankbang.com': 'spbank',
+    'spankbang.com': 'sites.spbank',
 }
 
 def get_domain(url):
