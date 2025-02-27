@@ -85,7 +85,7 @@ async def handle_link(client, message):
               bar.append(button)
           keyboard=InlineKeyboardMarkup(bar)
           if data.thumbnail:
-            await message.edit_media(
+            await msg.edit_media(
               InputMediaPhoto(
                 media=data.thumbnail,
                 caption=rtext,
@@ -99,7 +99,7 @@ async def handle_link(client, message):
             )
       
         else:
-          await message.edit_text(f"**Error: {data["error"]}")
+          await msg.edit_text(f"**Error: {data["error"]}")
         
 
 async def is_direct_download(url):
