@@ -60,7 +60,7 @@ json_data = {
 }
 
 # Save the JSON data
-json_file_path = save_json(json_data)
+#json_file_path = save_json(json_data)
 
 # Read the saved JSON data
-get_json(os.path.basename(json_file_path))
+#get_json(os.path.basename(json_file_path))
