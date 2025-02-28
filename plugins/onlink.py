@@ -73,10 +73,8 @@ async def handle_link(client, message):
           jsonf = save_json(data)
           rtext = f'**📃Extracted✅️\n\n'#🟢**Name**: {data.get("name","N/A")}\n🟢**Discription**: {data.get("discription","N/A")}\n🟢Duration: {data.get("duration","N/A")}'
           for key in data:
-            if key != "links" & key != "thumbnail":
+            if key != "links" and key != "thumbnail":
               rtext+=f'🟢**{key}**: {data.get(key,"N/A")}\n'
-            
-          
           bar = []
           links = data["links"]
           for qs in data["links"]:
