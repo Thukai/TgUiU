@@ -26,7 +26,7 @@ async def handle_callback(client, callback_query):
     k = parts[3]  # {k}
 
     json_data = get_json(jsonf)
-    link = json_data[mk][k]
+    link = json_data["links"][mk][k]
     newName = f"{json_data['name']}.{mk}"
     dl_file = await dl(url=link, msg=msg, custom_filename=newName)
     if dl_file and not "error" in dl_file:
