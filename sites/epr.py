@@ -79,7 +79,7 @@ def get_download_links(url):
                 download_data[format_type][key] = "https://www.eporner.com" + a_tag["href"]
 
     # Return the JSON data
-    return json.dumps(download_data, indent=4)
+    return download_data
 
 def extract(url):
   try:
