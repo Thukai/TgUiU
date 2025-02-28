@@ -70,8 +70,10 @@ def extract(url):
             "description": json_ld_data.get("description", ""),
             "duration": json_ld_data.get("duration", ""),
             "thumbnail": json_ld_data.get("thumbnailUrl", ""),
-            "mp4": {k: v[0] for k, v in stream_data.items() if k.endswith("p") and v},
-            "m3u8": {k: v[0] for k, v in stream_data.items() if k.startswith("m3u8") and v},
+            "links":{
+                "mp4": {k: v[0] for k, v in stream_data.items() if k.endswith("p") and v},
+                "m3u8": {k: v[0] for k, v in stream_data.items() if k.startswith("m3u8") and v},
+        }
         }
 
         return final_json
