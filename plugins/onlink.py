@@ -71,18 +71,23 @@ async def handle_link(client, message):
         data = run_extractor(link)
         if not "error" in data:
           jsonf = save_json(data)
-          rtext = f'**📃Extracted✅️\n\n🟢**Name**: {data.get("name","N/A")}\n🟢**Discription**: {data.get("discription","N/A")}\n🟢Duration: {data.get("duration","N/A")}'
-          mp4s = data.get("mp4",None)
-          m3u8s = data.get("m3u8",None)
+          rtext = f'**📃Extracted✅️\n\n'#🟢**Name**: {data.get("name","N/A")}\n🟢**Discription**: {data.get("discription","N/A")}\n🟢Duration: {data.get("duration","N/A")}'
+          for key in data:
+            if key != "links":
+              rtext+=f'🟢**{key}**: {data.get(key,"N/A")}\n'
+            
+          #mp4s = data.get("mp4",None)
+          #m3u8s = data.get("m3u8",None)
           bar = []
-          if mp4s:
-            for k in mp4s:
-              button = [InlineKeyboardButton(f"{k}",callback_data=f"ext_{jsonf}_mp4_{k}")]
+          links = data["links"]
+          for qs in links:
+            for k in links[qs]:
+              button = [InlineKeyboardButton(f"{qs}({k})",callback_data=f"ext_{jsonf}_{qs}_{k}")]
               bar.append(button)
-          if m3u8s:
-            for k in m3u8s:
-              button = [InlineKeyboardButton(f"{k}",callback_data=f"ext_{jsonf}_m3u8_{k}")]
-              bar.append(button)
+          #if m3u8s:
+            #for k in m3u8s:
+              #button = [InlineKeyboardButton(f"{k}",callback_data=f"ext_{jsonf}_{_{k}")]
+              #bar.append(button)
           keyboard=InlineKeyboardMarkup(bar)
           if data["thumbnail"]:
             await msg.reply_photo(
