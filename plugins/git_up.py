@@ -104,7 +104,7 @@ async def convert_to_hls(input_video_path, output_dir, msg):
         '-hls_segment_filename', os.path.join(output_dir, 'segment_%03d.ts'),
         output_m3u8
     ]
-    
+    await msg.edit_text()
     # Run FFmpeg command and capture its output in real-time
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     
@@ -118,7 +118,8 @@ async def convert_to_hls(input_video_path, output_dir, msg):
             hours, minutes, seconds = map(float, match.groups())
             elapsed_seconds = hours * 3600 + minutes * 60 + seconds
             percentage = (elapsed_seconds / total_duration) * 100
-            pmsg = f"FFmpeg Progress: {percentage:.2f}% complete"
+            #pmsg = f"FFmpeg Progress: {percentage:.2f}% complete"
+            pmsg =f"Ffmpeg : e time:{elapsed_seconds}"
             print(pmsg, end="")
             await u_msg(msg, start_t, pmsg)
     
