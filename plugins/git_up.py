@@ -6,7 +6,7 @@ import sys
 import time
 import re
 from config import Config
-#from pymediainfo import MediaInfo
+from pymediainfo import MediaInfo
 last_msg = ""
 last_upt = 0
 
