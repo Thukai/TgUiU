@@ -19,8 +19,9 @@ async def up_to_git(client, message):
     await message.reply("**❌️You are not authorized to use me!❌️**")
     return
   v_msg = message.reply_to_message
-  msg = await message.reply("Trying to start!...")
-  file_path = await download_file(client, v_msg, download_dir, msg)
+  v_path=  os.path.join(download_dir,v_msg.video.file_name)
+  msg = await message.reply("Trying to start!...\n {v_path}")
+  file_path = await download_file(client, v_msg, v_path, msg)
   if file_path:
     r = await to_git(file_path, msg)
     
