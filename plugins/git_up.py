@@ -5,11 +5,13 @@ import base64
 import sys
 import time
 import re
+from config import Config
 #from pymediainfo import MediaInfo
 last_msg = ""
 last_upt = 0
 
-async def emsg(msg, start_t, txt):
+
+async def u_msg(msg, start_t, txt):
   global last_msg, last_upt
   if txt != last_msg:
     if (time.time() - last_upt) >= 10:
@@ -58,7 +60,8 @@ async def convert_to_hls(input_video_path, output_dir, msg):
         print("Error: Unable to determine video duration.")
         await msg.edit_text("Unable to get video duration.")
         return None, None
-    
+
+    start_t = time.time()
     # Run the FFmpeg command to convert video to HLS
     output_m3u8 = os.path.join(output_dir, 'output.m3u8')
     cmd = [
@@ -82,13 +85,15 @@ async def convert_to_hls(input_video_path, output_dir, msg):
             hours, minutes, seconds = map(float, match.groups())
             elapsed_seconds = hours * 3600 + minutes * 60 + seconds
             percentage = (elapsed_seconds / total_duration) * 100
-            if 
-            print(f"\rFFmpeg Progress: {percentage:.2f}% complete", end="")
+            pmsg = f"\rFFmpeg Progress: {percentage:.2f}% complete", end="")
+            print(pmsg)
+            await u_msg(msg, start_t, pmsg)
     
     print("\nFFmpeg Conversion Complete.")
+    await msg.edit_text("Converted!..")
     return output_m3u8, output_dir
 # Function to convert video to HLS and show FFmpeg progress
-def cconvert_to_hls(input_video_path, output_dir):
+async def cconvert_to_hls(input_video_path, output_dir):
     # Ensure output directory exists
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -122,14 +127,10 @@ def cconvert_to_hls(input_video_path, output_dir):
     print("\nFFmpeg Conversion Complete.")
     return output_m3u8, output_dir
 
-done_git = []
 # Function to upload a file to GitHub with progress tracking
 def upload_to_github(file_path, repo, branch, github_token, upload_dir):
-    global done_git
     url = f"https://api.github.com/repos/{repo}/contents/{upload_dir}/{os.path.basename(file_path)}"
-    if file_path in done_git:
-       return
-    done_git.append(file_path)
+    
     with open(file_path, "rb") as file:
       content = file.read()
     
@@ -179,15 +180,15 @@ def delete_dir(directory):
     print(f"Deleted temporary directory: {directory}")
 
 # Main function
-def main(video_path, repo, branch, github_token):
+async def main(video_path, repo, branch, github_token, msg):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     video_dir = f"{video_name}"
     
     # Convert video to HLS
-    m3u8_file, ts_dir = convert_to_hls(video_path, video_dir)
+    m3u8_file, ts_dir = await convert_to_hls(video_path, video_dir, msg)
     
     # Upload m3u8 file
-    upload_to_github(m3u8_file, repo, branch, github_token, video_name)
+    await upload_to_github(m3u8_file, repo, branch, github_token, video_name)
     
     seg_count = len(os.listdir(ts_dir))
     done_segs = 0
@@ -197,19 +198,22 @@ def main(video_path, repo, branch, github_token):
             ts_file_path = os.path.join(ts_dir, ts_file)
             xx = upload_to_github(ts_file_path, repo, branch, github_token, video_name)
             if "error" in xx:
-                
+                await msg.edit_text(xx["error"])
                 break
             done_segs+=1
-            
+            pr = len(done_segs) / seg_count) * 100
+            p_msg = f"Uploading..!\n\n{len(done_segs)} of {seg_count} streamfiles...\n\nP: {round(pr,2)}%"
+            await u_msg(msg, start_t, p_msg)
             #time.sleep(0.5)
             
     # Delete the temporary files and directories
     delete_dir(video_dir)
 
-if __name__ == "__main__":
-    video_path = input("Enter the path to your video: ")
-    repo = "Ravindu2355/tsvv"  # Replace with your repository name
-    branch = "main"  # GitHub branch to upload to (default is "main")
-    github_token = "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"  # Replace with your GitHub token
+async def to_git(file_path, msg):
+    #video_path = input("Enter the path to your video: ")
+    repo = f"{Config.GIT_UN}/{Config.GIT_REPO}"  # Replace with your repository name
+    branch = Config.GIT_BRANCH  # GitHub branch to upload to (default is "main")
+    github_token = Config.GIT_TK# look like "ghp_pxbu30smvw9nOdLQ1qbeqcx63yg0GOLgD"  # Replace with your GitHub token
 
-    main(video_path, repo, branch, github_token)
+    await main(file_path, repo, branch, github_token, msg)
+    return 
