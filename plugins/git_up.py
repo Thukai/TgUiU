@@ -5,11 +5,30 @@ import base64
 import sys
 import time
 import re
+import ffmpeg
 from config import Config
 from pymediainfo import MediaInfo
 from moviepy.editor import VideoFileClip
 last_msg = ""
 last_upt = 0
+
+
+def get_media_info(file_path, thumb_path=None):
+    try:
+        probe = ffmpeg.probe(file_path)
+        duration = int(float(probe["format"]["duration"])) if "duration" in probe["format"] else 0
+        if not thumb_path:
+            thumb_path = f"{file_path}.jpg"
+            (
+                ffmpeg.input(file_path, ss=1)
+                .output(thumb_path, vframes=1)
+                .run(capture_stdout=True, capture_stderr=True)
+            )
+        return duration, thumb_path
+    except Exception as e:
+        print(f"FFmpeg Error: {e}")
+        return 0, None
+
 
 def get_video_duration(input_video_path):
     """Get the total duration of the video in seconds using MoviePy."""
@@ -66,7 +85,9 @@ async def convert_to_hls(input_video_path, output_dir, msg):
         os.makedirs(output_dir)
 
     # Get video duration
-    total_duration = get_video_duration(input_video_path)
+    total_duration, thumb = get_media_info(input_video_path)
+    if thumb:
+        await upload_to_github(thumb, output_dir)
     if total_duration is None:
         print("Error: Unable to determine video duration.")
         await msg.edit_text("Unable to get video duration.")
@@ -141,8 +162,8 @@ async def cconvert_to_hls(input_video_path, output_dir):
     return output_m3u8, output_dir
 
 # Function to upload a file to GitHub with progress tracking
-def upload_to_github(file_path, repo, branch, github_token, upload_dir):
-    url = f"https://api.github.com/repos/{repo}/contents/{upload_dir}/{os.path.basename(file_path)}"
+def upload_to_github(file_path, upload_dir):
+    url = f"https://api.github.com/repos/{Config.GIT_UN}/{Config.GIT_REPO}/contents/{upload_dir}/{os.path.basename(file_path)}"
     
     with open(file_path, "rb") as file:
       content = file.read()
@@ -150,13 +171,13 @@ def upload_to_github(file_path, repo, branch, github_token, upload_dir):
     content_b64 = base64.b64encode(content).decode("utf-8")
     payload = {
         "message": f"Upload {os.path.basename(file_path)}",
-        "branch": branch,
+        "branch": Config.GIT_BRANCH,
         "content": content_b64
     }
     
     headers = {
         "accept":"application/vnd.github+json",
-        "Authorization": f"token {github_token}"
+        "Authorization": f"token {Config.GIT_TK}"
     }
     
     # Track progress by uploading in chunks
@@ -193,7 +214,7 @@ def delete_dir(directory):
     print(f"Deleted temporary directory: {directory}")
 
 # Main function
-async def main(video_path, repo, branch, github_token, msg):
+async def main(video_path, msg):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     video_dir = f"{video_name}"
     
@@ -201,7 +222,7 @@ async def main(video_path, repo, branch, github_token, msg):
     m3u8_file, ts_dir = await convert_to_hls(video_path, video_dir, msg)
     
     # Upload m3u8 file
-    await upload_to_github(m3u8_file, repo, branch, github_token, video_name)
+    await upload_to_github(m3u8_file, video_name)
     
     seg_count = len(os.listdir(ts_dir))
     done_segs = 0
@@ -209,7 +230,7 @@ async def main(video_path, repo, branch, github_token, msg):
     for ts_file in os.listdir(ts_dir):
         if ts_file.endswith(".ts"):
             ts_file_path = os.path.join(ts_dir, ts_file)
-            xx = upload_to_github(ts_file_path, repo, branch, github_token, video_name)
+            xx = upload_to_github(ts_file_path, video_name)
             if "error" in xx:
                 await msg.edit_text(xx["error"])
                 break
@@ -228,5 +249,5 @@ async def to_git(file_path, msg):
     branch = Config.GIT_BRANCH  # GitHub branch to upload to (default is "main")
     github_token = Config.GIT_TK# look like "ghp_pxbu30smvw9nOdLQ1qbeqcx63yg0GOLgD"  # Replace with your GitHub token
 
-    await main(file_path, repo, branch, github_token, msg)
+    await main(file_path, msg)
     return 
