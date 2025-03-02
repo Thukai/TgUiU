@@ -7,9 +7,20 @@ import time
 import re
 from config import Config
 from pymediainfo import MediaInfo
+from moviepy.editor import VideoFileClip
 last_msg = ""
 last_upt = 0
 
+def get_video_duration(input_video_path):
+    """Get the total duration of the video in seconds using MoviePy."""
+    try:
+        video = VideoFileClip(input_video_path)
+        duration = video.duration  # Duration in seconds
+        print(f"Video duration: {duration} seconds")
+        return duration
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
 async def u_msg(msg, start_t, txt):
   global last_msg, last_upt
@@ -29,7 +40,7 @@ def gget_video_duration(video_path):
     return None
 
 
-def get_video_duration(input_video_path):
+def gghet_video_duration(input_video_path):
     """Get the total duration of the video in seconds using FFmpeg."""
     cmd = [
         'ffmpeg', '-i', input_video_path,
