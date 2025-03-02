@@ -27,7 +27,7 @@ def get_media_info(file_path, thumb_path=None):
         return duration, thumb_path
     except Exception as e:
         print(f"FFmpeg Error: {e}")
-        return 0, None
+        return None, None
 
 
 def get_video_duration(input_video_path):
@@ -87,6 +87,7 @@ async def convert_to_hls(input_video_path, output_dir, msg):
     # Get video duration
     total_duration, thumb = get_media_info(input_video_path)
     if thumb:
+        await msg.edit_text("uploding thumb")
         await upload_to_github(thumb, output_dir)
     if total_duration is None:
         print("Error: Unable to determine video duration.")
