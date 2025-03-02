@@ -3,8 +3,8 @@ import time
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, InputMediaPhoto
 from plugins.authers import is_authorized
-from tgdw import download_file
-from git_up import to_git
+from plugins.tgdw import download_file
+from plugins.git_up import to_git
 
 download_dir = "/forGit"
 if not os.path.exists(download_dir):
