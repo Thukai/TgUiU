@@ -11,6 +11,14 @@ class Config(object):
   
   OWNER =os.getenv("owner","1387186514")
 
+  GIT_TK =os.getenv("git_tk","")
+
+  GIT_UN = os.getenv("git_name","")
+
+  GIT_REPO = os.getenv("git_repo","")
+
+  GIT_BRANCH = os.getenv("git_branch","main")
+
   #TeraExScript = os.getenv("tscript")
 
   #PW =int(os.getenv("spw"))
