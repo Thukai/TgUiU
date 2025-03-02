@@ -85,8 +85,8 @@ async def convert_to_hls(input_video_path, output_dir, msg):
             hours, minutes, seconds = map(float, match.groups())
             elapsed_seconds = hours * 3600 + minutes * 60 + seconds
             percentage = (elapsed_seconds / total_duration) * 100
-            pmsg = f"\rFFmpeg Progress: {percentage:.2f}% complete", end="")
-            print(pmsg)
+            pmsg = f"FFmpeg Progress: {percentage:.2f}% complete"
+            print(pmsg, end="")
             await u_msg(msg, start_t, pmsg)
     
     print("\nFFmpeg Conversion Complete.")
