@@ -20,8 +20,8 @@ async def up_to_git(client, message):
     return
   v_msg = message.reply_to_message
   v_path=  os.path.join(download_dir,v_msg.video.file_name)
-  msg = await message.reply("Trying to start!...\n {v_path}")
-  file_path = await download_file(client, v_msg, v_path, msg)
+  msg = await message.reply(f"Trying to start!...\n {v_path}")
+  file_path = await download_file(client, v_msg, download_dir, msg)
   if file_path:
     r = await to_git(file_path, msg)
     
