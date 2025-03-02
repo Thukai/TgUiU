@@ -27,7 +27,7 @@ def get_media_info(file_path, thumb_path=None):
         return duration, thumb_path
     except Exception as e:
         print(f"FFmpeg Error: {e}")
-        return None, None
+        return 0, None
 
 
 def get_video_duration(input_video_path):
