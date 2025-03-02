@@ -104,7 +104,7 @@ async def cconvert_to_hls(input_video_path, output_dir, msg):
         '-hls_segment_filename', os.path.join(output_dir, 'segment_%03d.ts'),
         output_m3u8
     ]
-    await msg.edit_text(f"{output_m3u8}\n{}")
+    await msg.edit_text(f"{output_m3u8}")
     # Run FFmpeg command and capture its output in real-time
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     
