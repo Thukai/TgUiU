@@ -131,7 +131,7 @@ async def main(video_path, msg):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     video_dir = f"{video_name}"
 
-    await msg.reply(f"Processing: {video_path}")
+    #await msg.reply(f"Processing: {video_path}")
 
     # Convert video to HLS
     m3u8_file, ts_dir = await convert_to_hls(video_path, video_dir, msg)
@@ -163,9 +163,11 @@ async def main(video_path, msg):
         await u_msg(msg, progress_msg)
 
     # Cleanup
+    lurl = f"https://github.com/{Config.GIT_UN}/{Config.GIT_REPO}/blob/{Config.GIT_BRANCH}/{m3u8_file}"
     delete_dir(video_dir)
-    await msg.edit_text("Upload completed!")
-
+    await msg.edit_text(f"Upload completed!\n\nUrl: {lurl}")
+    if os.path.exists(video_path):
+        os.remove(video_path)
 
 async def to_git(file_path, msg):
     await main(file_path, msg)
