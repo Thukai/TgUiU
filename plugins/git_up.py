@@ -141,7 +141,7 @@ async def main(video_path, msg):
     # Upload m3u8 file
     upload_result = upload_to_github(m3u8_file, video_name)
     if "error" in upload_result:
-        await msg.edit_text(f"{upload_result["error"]}\n{os.path.exists(m3u8_file)}")
+        await msg.edit_text(f'{upload_result["error"]}\n{os.path.exists(m3u8_file)}')
         return
 
     # Upload .ts segments with progress
