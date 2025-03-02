@@ -102,7 +102,8 @@ def upload_to_github(file_path, upload_dir):
 
     headers = {
         "accept": "application/vnd.github+json",
-        "Authorization": f"token {Config.GIT_TK}"
+        "Authorization": f"token {Config.GIT_TK}",
+        'X-GitHub-Api-Version': '2022-11-28'
     }
 
     response = requests.put(url, json=payload, headers=headers)
@@ -140,7 +141,7 @@ async def main(video_path, msg):
     # Upload m3u8 file
     upload_result = upload_to_github(m3u8_file, video_name)
     if "error" in upload_result:
-        await msg.edit_text(upload_result["error"])
+        await msg.edit_text(f"{upload_result["error"]}\n{os.path.exists(m3u8_file)}")
         return
 
     # Upload .ts segments with progress
