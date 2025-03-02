@@ -76,7 +76,7 @@ def gghet_video_duration(input_video_path):
         return None
 
 
-async def convert_to_hls(input_video_path, output_dir, msg):
+async def cconvert_to_hls(input_video_path, output_dir, msg):
     """Convert video to HLS and show progress in percentage."""
     global last_msg, last_upt
     await msg.edit_text("Starting Coverting...!")
@@ -104,7 +104,7 @@ async def convert_to_hls(input_video_path, output_dir, msg):
         '-hls_segment_filename', os.path.join(output_dir, 'segment_%03d.ts'),
         output_m3u8
     ]
-    await msg.edit_text()
+    await msg.edit_text(f"{output_m3u8}\n{}")
     # Run FFmpeg command and capture its output in real-time
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     
@@ -129,7 +129,7 @@ async def convert_to_hls(input_video_path, output_dir, msg):
 
 
 # Function to convert video to HLS and show FFmpeg progress
-async def cconvert_to_hls(input_video_path, output_dir):
+async def convert_to_hls(input_video_path, output_dir,msg):
     # Ensure output directory exists
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -161,6 +161,7 @@ async def cconvert_to_hls(input_video_path, output_dir):
         #time.sleep(1)
     
     print("\nFFmpeg Conversion Complete.")
+    await msg.reply("converted")
     return output_m3u8, output_dir
 
 # Function to upload a file to GitHub with progress tracking
