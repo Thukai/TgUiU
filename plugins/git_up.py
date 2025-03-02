@@ -217,7 +217,7 @@ def delete_dir(directory):
 async def main(video_path, msg):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     video_dir = f"{video_name}"
-    
+    await msg.reply(f"videopath: {video_path} \n vi name: {video_name}")
     # Convert video to HLS
     m3u8_file, ts_dir = await convert_to_hls(video_path, video_dir, msg)
     
