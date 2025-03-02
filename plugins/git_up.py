@@ -163,7 +163,8 @@ async def main(video_path, msg):
         await u_msg(msg, progress_msg)
 
     # Cleanup
-    lurl = f"https://github.com/{Config.GIT_UN}/{Config.GIT_REPO}/blob/{Config.GIT_BRANCH}/{m3u8_file}"
+    #lurl = f"https://github.com/{Config.GIT_UN}/{Config.GIT_REPO}/blob/{Config.GIT_BRANCH}/{m3u8_file}"
+    lurl = f"https://raw.githubusercontent.com/{Config.UN}/{Config.GIT_REPO}/refs/heads/{Config.GIT_BRANCH}/{m3u8_file}"
     delete_dir(video_dir)
     await msg.edit_text(f"Upload completed!\n\nUrl: {lurl}")
     if os.path.exists(video_path):
