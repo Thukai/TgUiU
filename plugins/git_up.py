@@ -203,7 +203,7 @@ async def main(video_path, repo, branch, github_token, msg):
                 await msg.edit_text(xx["error"])
                 break
             done_segs+=1
-            pr = len(done_segs) / seg_count) * 100
+            pr = (len(done_segs) / seg_count) * 100
             p_msg = f"Uploading..!\n\n{len(done_segs)} of {seg_count} streamfiles...\n\nP: {round(pr,2)}%"
             await u_msg(msg, start_t, p_msg)
             #time.sleep(0.5)
