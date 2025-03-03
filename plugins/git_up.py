@@ -64,9 +64,10 @@ async def convert_to_hls2(input_video_path, output_dir, msg, threads=None, extra
     ]
     
     # Add custom threads argument if specified
+    #if threads:
+        #cmd.insert(2, f"-threads {threads}")
     if threads:
-        cmd.insert(2, f"-threads {threads}")
-    
+        cmd.extend(["-threads", str(threads)])
     # Add any additional arguments provided by the user
     if extra_args:
         cmd.extend(extra_args)
