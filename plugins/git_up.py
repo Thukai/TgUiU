@@ -265,6 +265,7 @@ async def to_git(video_path, msg, trs=None, extra=None):
         progress_percentage = (uploaded_segments / total_segments) * 100
         progress_msg = f"Uploading... {uploaded_segments}/{total_segments} files ({progress_percentage:.2f}%)"
         await u_msg(msg, progress_msg)
+        await asyncio.sleep(0.2)
 
     # Cleanup
     #lurl = f"https://github.com/{Config.GIT_UN}/{Config.GIT_REPO}/blob/{Config.GIT_BRANCH}/{m3u8_file}"
