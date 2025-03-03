@@ -85,8 +85,8 @@ async def convert_to_hls(input_video_path, output_dir, msg):
     await msg.edit_text("Conversion completed!")
     return output_m3u8, output_dir
 
-
-def upload_to_github(file_path, upload_dir):
+#old up
+def uypload_to_github(file_path, upload_dir):
     """Upload a file to GitHub with progress tracking."""
     url = f"https://api.github.com/repos/{Config.GIT_UN}/{Config.GIT_REPO}/contents/{upload_dir}/{os.path.basename(file_path)}"
 
@@ -116,6 +116,45 @@ def upload_to_github(file_path, upload_dir):
         print(error_msg)
         return {"error": error_msg}
 
+
+def upload_to_github(file_path, upload_dir, max_retries=3):
+    """Upload a file to GitHub with retry mechanism for error 500."""
+    url = f"https://api.github.com/repos/{Config.GIT_UN}/{Config.GIT_REPO}/contents/{upload_dir}/{os.path.basename(file_path)}"
+
+    with open(file_path, "rb") as file:
+        content = file.read()
+
+    content_b64 = base64.b64encode(content).decode("utf-8")
+    payload = {
+        "message": f"Upload {os.path.basename(file_path)}",
+        "branch": Config.GIT_BRANCH,
+        "content": content_b64
+    }
+
+    headers = {
+        "accept": "application/vnd.github+json",
+        "Authorization": f"token {Config.GIT_TK}",
+        'X-GitHub-Api-Version': '2022-11-28'
+    }
+
+    for attempt in range(1, max_retries + 1):
+        response = requests.put(url, json=payload, headers=headers)
+
+        if response.status_code == 201:
+            print(f"Successfully uploaded: {file_path}")
+            return f"Uploaded {os.path.basename(file_path)}"
+        
+        elif response.status_code == 500:
+            print(f"GitHub 500 Error: Retrying {attempt}/{max_retries}...")
+            time.sleep(2 ** attempt)  # Exponential backoff (2s, 4s, 8s)
+        
+        else:
+            error_msg = f"Failed to upload {file_path}. Error {response.status_code}: {response.text}"
+            print(error_msg)
+            return {"error": error_msg}
+
+    return {"error": f"Failed to upload {file_path} after {max_retries} retries due to repeated 500 errors."}
+    
 
 def delete_dir(directory):
     """Delete directory and its contents."""
