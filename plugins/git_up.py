@@ -39,6 +39,62 @@ async def u_msg(msg, txt):
         last_upt = time.time()
 
 
+async def convert_to_hls2(input_video_path, output_dir, msg, threads=None, extra_args=None):
+    """Convert video to HLS with custom threads and additional FFmpeg arguments."""
+    await msg.edit_text("Starting conversion...")
+
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Get video duration
+    total_duration, thumb = get_media_info(input_video_path)
+    if not total_duration:
+        await msg.edit_text("Error: Unable to determine video duration.")
+        return None, None
+
+    output_m3u8 = os.path.join(output_dir, "output.m3u8")
+    
+    # Base FFmpeg command
+    cmd = [
+        "ffmpeg", "-i", input_video_path,
+        "-preset", "ultrafast", "-g", "48", "-sc_threshold", "0",
+        "-hls_time", "10", "-hls_list_size", "0",
+        "-hls_segment_filename", os.path.join(output_dir, "segment_%03d.ts"),
+        output_m3u8
+    ]
+    
+    # Add custom threads argument if specified
+    if threads:
+        cmd.insert(2, f"-threads {threads}")
+    
+    # Add any additional arguments provided by the user
+    if extra_args:
+        cmd.extend(extra_args)
+
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+
+    while True:
+        output = await process.stderr.readline()
+        if not output:
+            break
+
+        output = output.decode().strip()
+        match = re.search(r"time=(\d+):(\d+):([\d.]+)", output)
+        if match:
+            hours, minutes, seconds = map(float, match.groups())
+            elapsed_seconds = hours * 3600 + minutes * 60 + seconds
+            percentage = (elapsed_seconds / total_duration) * 100
+            progress_msg = f"FFmpeg Progress: {percentage:.2f}% complete"
+            await u_msg(msg, progress_msg)
+
+    await process.wait()
+    await msg.edit_text("Conversion completed!")
+    return output_m3u8, output_dir
+
 async def convert_to_hls(input_video_path, output_dir, msg):
     """Convert video to HLS and show FFmpeg progress in real-time."""
     await msg.edit_text("Starting conversion...")
@@ -166,14 +222,22 @@ def delete_dir(directory):
         print(f"Deleted directory: {directory}")
 
 
-async def main(video_path, msg):
+async def to_git(video_path, msg, trs=None, extra=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     video_dir = f"{video_name}"
 
     #await msg.reply(f"Processing: {video_path}")
-
     # Convert video to HLS
-    m3u8_file, ts_dir = await convert_to_hls(video_path, video_dir, msg)
+    if trs:
+        if extra:
+            m3u8_file, ts_dir = await convert_to_hls2(video_path, video_dir, msg, threads=trs, extra_args=extra)
+        else:
+            m3u8_file, ts_dir = await convert_to_hls2(video_path, video_dir, msg, threads=trs)
+    else:
+        if extra:
+            m3u8_file, ts_dir = await convert_to_hls2(video_path, video_dir, msg, extra_args=extra)
+        else:
+            m3u8_file, ts_dir = await convert_to_hls(video_path, video_dir, msg)
     if not m3u8_file:
         return
 
@@ -209,5 +273,5 @@ async def main(video_path, msg):
     if os.path.exists(video_path):
         os.remove(video_path)
 
-async def to_git(file_path, msg):
-    await main(file_path, msg)
+#async def to_git(file_path, msg):
+    #await main(file_path, msg)
